@@ -6,6 +6,7 @@ from RAGHelper_cloud import RAGHelperCloud
 from RAGHelper_local import RAGHelperLocal
 from pymilvus import Collection, connections
 from werkzeug.utils import secure_filename
+import sqlite3
 
 def load_bashrc():
     """
@@ -227,6 +228,30 @@ def delete_document():
     raghelper.loadData()
 
     return jsonify({"count": result.delete_count})
+
+@app.route('/save_feedback', methods=['POST'])
+def save_feedback():
+    data = request.json
+    query = data.get('query')
+    answer = data.get('answer')
+    document_id = data.get('document_id')
+    rating = data.get('rating')
+    timestamp = data.get('timestamp')
+    print(data)
+   
+    conn = sqlite3.connect('feedback.db')
+    cursor = conn.cursor()
+   
+    cursor.execute('''
+        INSERT INTO Feedback (query, answer, document_id, rating, timestamp)
+        VALUES (?, ?, ?, ?, ?)
+    ''', (query, answer, document_id, rating, timestamp))
+   
+    conn.commit()
+    conn.close()
+   
+    return jsonify({"status": "success", "message": "Feedback saved"})
+
 
 
 if __name__ == "__main__":

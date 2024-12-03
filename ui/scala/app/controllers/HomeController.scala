@@ -153,6 +153,16 @@ class HomeController @Inject()(
   }
 
   def feedback() = Action { implicit request: Request[AnyContent] =>
-    Ok(Json.obj())
+    val feedbackData = request.body.asJson.getOrElse(Json.obj())
+    val colabApiUrl = s"${config.get[String]("server_url")}/save_feedback"
+ 
+    ws.url(colabApiUrl)
+      .post(feedbackData)
+      .map { response =>
+        Ok(Json.obj("status" -> "success", "message" -> "Feedback saved in Colab"))
+      }
+      .recover {
+        case _ => InternalServerError(Json.obj("status" -> "error", "message" -> "Failed to save feedback"))
+    }
   }
 }
